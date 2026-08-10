@@ -19,7 +19,7 @@ KEYWORDS = [
     "临时使用", "规划转型", "智能建造", "数智孪生"
 ]
 
-# 关键词的显示别名（修复了引号问题）
+# 显示别名（修复引号）
 KEYWORD_ALIAS = {
     "存量提质增效": "存量提质增效",
     "城市更新十五五规划": "城市更新（十五五）规划",
@@ -48,6 +48,7 @@ def extract_region(text):
         return "全国"
 
 def match_keywords(text):
+    """返回匹配的关键词列表，若无匹配则返回空列表（这条新闻将被丢弃）"""
     matched = []
     for kw in KEYWORDS:
         if kw == "城市更新十五五规划":
@@ -55,7 +56,7 @@ def match_keywords(text):
                 matched.append(kw)
         elif kw in text:
             matched.append(kw)
-    return matched if matched else ["其他"]
+    return matched  # 不再返回 ["其他"]
 
 def fetch_news():
     all_entries = []
@@ -71,6 +72,9 @@ def fetch_news():
                     continue
                 region = extract_region(full_text)
                 keywords = match_keywords(full_text)
+                # 如果没有任何关键词匹配，则丢弃这条新闻（不收录）
+                if not keywords:
+                    continue
                 entry_data = {
                     'title': title,
                     'link': entry.get('link', '#'),
@@ -88,17 +92,16 @@ def fetch_news():
 def generate_html(entries):
     entries.sort(key=lambda x: x['published'], reverse=True)
     
-    # 按关键词分组
+    # 按关键词分组（每条新闻可能出现在多个关键词下）
     grouped_by_keyword = defaultdict(list)
     for item in entries:
         for kw in item['keywords']:
             grouped_by_keyword[kw].append(item)
     
-    # 按关键词顺序展示
-    ordered_keywords = [kw for kw in KEYWORDS if kw in grouped_by_keyword]
-    if "其他" in grouped_by_keyword:
-        ordered_keywords.append("其他")
+    # 强制显示所有12个关键词，即使没有新闻，也显示卡片（0条）
+    ordered_keywords = KEYWORDS  # 全部显示，保持顺序
 
+    # 以下 CSS 和 HTML 结构与之前相同（略作优化）
     css = """
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -313,28 +316,32 @@ def generate_html(entries):
 
     html_lines.append('<div class="grid" id="newsGrid">')
     for kw in ordered_keywords:
-        items = grouped_by_keyword[kw]
+        items = grouped_by_keyword.get(kw, [])  # 如果没有新闻，则为空列表
         display_name = KEYWORD_ALIAS.get(kw, kw)
         icon = "📌"
         html_lines.append(f'<div class="card" data-keyword="{kw}">')
         html_lines.append(f'<div class="category"><span class="icon">{icon}</span><h2>{display_name}</h2><span class="tag">{len(items)}条</span></div>')
         html_lines.append('<ul class="news-list">')
-        for item in items[:50]:
-            title = html.escape(item['title'])
-            link = item['link']
-            source = html.escape(item.get('source', '未知来源'))
-            pub = item['published'][:10] if len(item['published']) > 10 else item['published']
-            region_str = item['region']
-            region_tag = f'<span class="region-tag">📍{region_str}</span>'
-            html_lines.append(f'''
-            <li data-title="{title}" data-region="{region_str}" data-keywords="{kw}">
-                <a href="{link}" target="_blank">{title}</a>
-                <div class="meta">
-                    <span class="source">{source}</span>
-                    <span>{region_tag} <span class="date">{pub}</span></span>
-                </div>
-            </li>
-            ''')
+        if items:
+            for item in items[:50]:
+                title = html.escape(item['title'])
+                link = item['link']
+                source = html.escape(item.get('source', '未知来源'))
+                pub = item['published'][:10] if len(item['published']) > 10 else item['published']
+                region_str = item['region']
+                region_tag = f'<span class="region-tag">📍{region_str}</span>'
+                html_lines.append(f'''
+                <li data-title="{title}" data-region="{region_str}" data-keywords="{kw}">
+                    <a href="{link}" target="_blank">{title}</a>
+                    <div class="meta">
+                        <span class="source">{source}</span>
+                        <span>{region_tag} <span class="date">{pub}</span></span>
+                    </div>
+                </li>
+                ''')
+        else:
+            # 如果该关键词下没有新闻，显示提示信息
+            html_lines.append('<li style="color:#999; font-size:0.8rem; text-align:center; padding:1rem 0;">暂无相关新闻</li>')
         html_lines.append('</ul>')
         html_lines.append('<div class="card-footer">点击标题查看原文</div>')
         html_lines.append('</div>')
@@ -410,7 +417,7 @@ def generate_html(entries):
     print("网页生成成功！")
 
 if __name__ == "__main__":
-    print("稍等，机器人开始抓新闻了...")
+    print("奶奶稍等，机器人开始抓新闻了...")
     news = fetch_news()
     print(f"共抓取 {len(news)} 条新闻，正在排版...")
     generate_html(news)
