@@ -4,7 +4,7 @@ import html
 import re
 from collections import defaultdict
 
-# ===================== 配置区（可以自己改）=====================
+# ===================== 配置区 =====================
 RSS_URLS = [
     "https://news.google.com/rss/search?q=城乡规划+国土空间&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
     "https://news.google.com/rss/search?q=城市更新+老旧小区&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
@@ -13,7 +13,6 @@ RSS_URLS = [
     "https://news.google.com/rss/search?q=智能建造+数智孪生&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
 ]
 
-# 您定义的 12 个关键词
 KEYWORDS = [
     "存量提质增效", "城市更新十五五规划", "人本更新", "城市体检",
     "安全韧性", "四好建设", "城乡融合", "新质生产力",
@@ -21,20 +20,18 @@ KEYWORDS = [
 ]
 
 SITE_TITLE = "城乡规划 · 热点新闻聚合"
-# ================================================================
+# ===============================================
 
 def extract_region(text):
-    """根据新闻内容判断地域：全国 / 广东省 / 广州市"""
     text = text.lower()
     if re.search(r'广州|越秀|天河|海珠|荔湾|白云|黄埔|番禺|花都|南沙|从化|增城', text):
-        return "📍 广州市"
+        return "广州市"
     elif re.search(r'广东|深圳|东莞|佛山|珠海|中山|惠州|江门|肇庆|汕头|湛江', text):
-        return "📍 广东省"
+        return "广东省"
     else:
-        return "📍 全国"
+        return "全国"
 
 def match_keywords(text):
-    """匹配新闻内容中含有的关键词，返回匹配到的关键词列表"""
     matched = []
     for kw in KEYWORDS:
         if kw == "城市更新十五五规划":
@@ -42,7 +39,7 @@ def match_keywords(text):
                 matched.append(kw)
         elif kw in text:
             matched.append(kw)
-    return matched if matched else ["📌 其他"]
+    return matched if matched else ["其他"]
 
 def fetch_news():
     all_entries = []
@@ -76,11 +73,13 @@ def fetch_news():
 
 def generate_html(entries):
     entries.sort(key=lambda x: x['published'], reverse=True)
+    # 保留全部用于搜索过滤
+    # 按地域分组（仍用于卡片分组）
     grouped = defaultdict(list)
     for item in entries[:150]:
         grouped[item['region']].append(item)
 
-    # ========== 嵌入您提供的样式模板 ==========
+    # ========== 样式（与之前一致，增加搜索框样式）==========
     css = """
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -129,6 +128,68 @@ def generate_html(entries):
         .header h1 { font-size: 2.6rem; font-weight: 700; letter-spacing: 1px; background: linear-gradient(135deg, #0b3b5c, #1d7a8c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .header p { font-size: 1.1rem; color: #4a5b6e; margin-top: 0.5rem; border-bottom: 2px solid #d0ddee; padding-bottom: 1rem; max-width: 700px; margin-left: auto; margin-right: auto; }
         .header .badge { display: inline-block; background: #1d7a8c; color: #fff; font-size: 0.85rem; font-weight: 600; padding: 0.2rem 1rem; border-radius: 20px; margin-top: 0.5rem; }
+
+        /* 搜索栏 */
+        .search-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            background: #fff;
+            padding: 1rem 1.5rem;
+            border-radius: 60px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            border: 1px solid #dce5ef;
+        }
+        .search-bar input[type="text"] {
+            flex: 1 1 200px;
+            padding: 0.6rem 1.2rem;
+            border: 1px solid #d0ddee;
+            border-radius: 40px;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.2s;
+            min-width: 150px;
+        }
+        .search-bar input[type="text"]:focus {
+            border-color: #1d7a8c;
+        }
+        .search-bar select {
+            padding: 0.6rem 1.2rem;
+            border: 1px solid #d0ddee;
+            border-radius: 40px;
+            font-size: 1rem;
+            background: #fff;
+            outline: none;
+            cursor: pointer;
+            min-width: 120px;
+        }
+        .search-bar .clear-btn {
+            background: #e6eef9;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #1d5a7a;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .search-bar .clear-btn:hover {
+            background: #d0ddee;
+        }
+        @media (max-width: 600px) {
+            .search-bar {
+                border-radius: 20px;
+                padding: 1rem;
+            }
+            .search-bar input[type="text"], .search-bar select {
+                width: 100%;
+            }
+        }
+
         .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.8rem; }
         .card {
             background: #ffffff;
@@ -176,6 +237,7 @@ def generate_html(entries):
         .news-list .meta .date { color: #8a9bab; }
         .news-list .summary { font-size: 0.85rem; color: #4a5b6e; margin-top: 0.2rem; line-height: 1.4; }
         .keyword-tag { display: inline-block; background: #e6f0fa; color: #1a3c5e; padding: 0 10px; border-radius: 20px; font-size: 0.7rem; margin-right: 4px; }
+        .region-tag { display: inline-block; background: #d0e6f0; color: #0b4a5c; padding: 0 10px; border-radius: 20px; font-size: 0.7rem; margin-right: 4px; }
         .card-footer { margin-top: 0.8rem; padding-top: 0.6rem; border-top: 1px solid #ecf1f7; font-size: 0.75rem; color: #8a9bab; text-align: right; flex-shrink: 0; }
         .footer { margin-top: 3.5rem; text-align: center; font-size: 0.9rem; color: #6b7e93; border-top: 1px solid #dce5ef; padding-top: 1.8rem; }
         .footer a { color: #1d7a8c; text-decoration: none; }
@@ -249,15 +311,29 @@ def generate_html(entries):
     </div>
     ''')
 
-    # 卡片网格
-    html_lines.append('<div class="grid">')
-    region_order = ["📍 全国", "📍 广东省", "📍 广州市"]
+    # 搜索栏
+    html_lines.append('''
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="🔍 输入关键词搜索（如：城市更新）">
+        <select id="regionFilter">
+            <option value="">所有地域</option>
+            <option value="全国">全国</option>
+            <option value="广东省">广东省</option>
+            <option value="广州市">广州市</option>
+        </select>
+        <button class="clear-btn" id="clearBtn">清除筛选</button>
+    </div>
+    ''')
+
+    # 卡片网格，每条新闻加上 data-* 属性
+    html_lines.append('<div class="grid" id="newsGrid">')
+    region_order = ["全国", "广东省", "广州市"]
+    # 为每个地域生成卡片，但卡片内列表项会包含数据属性，用于JS过滤
     for region in region_order:
         if region not in grouped:
             continue
         items = grouped[region]
-        # 为每个地域生成一个卡片
-        html_lines.append(f'<div class="card">')
+        html_lines.append(f'<div class="card" data-region="{region}">')
         html_lines.append(f'<div class="category"><span class="icon">📌</span><h2>{region}</h2><span class="tag">{len(items)} 条</span></div>')
         html_lines.append('<ul class="news-list">')
         for item in items:
@@ -265,14 +341,18 @@ def generate_html(entries):
             summary = html.escape(item['summary'])
             link = item['link']
             pub = item['published'][:16] if len(item['published']) > 16 else item['published']
-            tags = ''.join([f'<span class="keyword-tag">#{kw}</span>' for kw in item['keywords']])
+            keywords_str = ','.join(item['keywords'])  # 用于搜索
+            region_str = item['region']
+            tags_html = ''.join([f'<span class="keyword-tag">#{kw}</span>' for kw in item['keywords']])
+            # 地域标签
+            region_tag = f'<span class="region-tag">📍 {region_str}</span>'
             html_lines.append(f'''
-            <li>
+            <li data-keywords="{keywords_str}" data-region="{region_str}" data-title="{title}">
                 <a href="{link}" target="_blank">{title}</a>
                 <div class="summary">{summary}</div>
                 <div class="meta">
                     <span class="date">🕒 {pub}</span>
-                    <span>{tags}</span>
+                    <span>{region_tag} {tags_html}</span>
                 </div>
             </li>
             ''')
@@ -291,21 +371,63 @@ def generate_html(entries):
 
     html_lines.append('</div>')  # 结束 container
 
-    # 返回顶部按钮
+    # 返回顶部按钮 + 搜索过滤脚本
     html_lines.append('''
     <button class="back-to-top" id="backToTop" aria-label="回到顶部">↑</button>
     <script>
-        var btn = document.getElementById('backToTop');
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 300) {
-                btn.classList.add('visible');
-            } else {
-                btn.classList.remove('visible');
+        (function() {
+            // 过滤逻辑
+            const searchInput = document.getElementById('searchInput');
+            const regionFilter = document.getElementById('regionFilter');
+            const clearBtn = document.getElementById('clearBtn');
+            const allItems = document.querySelectorAll('.news-list li');
+            const cards = document.querySelectorAll('.card');
+
+            function filter() {
+                const keyword = searchInput.value.trim().toLowerCase();
+                const region = regionFilter.value;
+
+                allItems.forEach(item => {
+                    const title = item.getAttribute('data-title') || '';
+                    const keywords = item.getAttribute('data-keywords') || '';
+                    const itemRegion = item.getAttribute('data-region') || '';
+                    const matchKeyword = keyword === '' || title.toLowerCase().includes(keyword) || keywords.toLowerCase().includes(keyword);
+                    const matchRegion = region === '' || itemRegion === region;
+                    item.style.display = (matchKeyword && matchRegion) ? '' : 'none';
+                });
+
+                // 更新每个卡片的计数
+                cards.forEach(card => {
+                    const list = card.querySelector('.news-list');
+                    const items = list.querySelectorAll('li');
+                    let visibleCount = 0;
+                    items.forEach(li => { if (li.style.display !== 'none') visibleCount++; });
+                    const tag = card.querySelector('.category .tag');
+                    if (tag) tag.textContent = visibleCount + ' 条';
+                });
             }
-        });
-        btn.addEventListener('click', function() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
+
+            searchInput.addEventListener('input', filter);
+            regionFilter.addEventListener('change', filter);
+            clearBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                regionFilter.value = '';
+                filter();
+            });
+
+            // 回到顶部
+            var btn = document.getElementById('backToTop');
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 300) {
+                    btn.classList.add('visible');
+                } else {
+                    btn.classList.remove('visible');
+                }
+            });
+            btn.addEventListener('click', function() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        })();
     </script>
     </body></html>
     ''')
