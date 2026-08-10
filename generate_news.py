@@ -19,14 +19,14 @@ KEYWORDS = [
     "临时使用", "规划转型", "智能建造", "数智孪生"
 ]
 
-# 关键词的显示别名（用于更美观的展示）
+# 关键词的显示别名（修复了引号问题）
 KEYWORD_ALIAS = {
     "存量提质增效": "存量提质增效",
-    "城市更新十五五规划": "城市更新"十五五"规划",
+    "城市更新十五五规划": "城市更新（十五五）规划",
     "人本更新": "人本更新",
     "城市体检": "城市体检",
     "安全韧性": "安全韧性",
-    "四好建设": ""四好"建设",
+    "四好建设": "四好建设",
     "城乡融合": "城乡融合",
     "新质生产力": "新质生产力",
     "临时使用": "临时使用",
@@ -94,13 +94,11 @@ def generate_html(entries):
         for kw in item['keywords']:
             grouped_by_keyword[kw].append(item)
     
-    # 按关键词顺序展示（保持KEYWORDS的顺序）
+    # 按关键词顺序展示
     ordered_keywords = [kw for kw in KEYWORDS if kw in grouped_by_keyword]
-    # 如果有"其他"关键词，放在最后
     if "其他" in grouped_by_keyword:
         ordered_keywords.append("其他")
 
-    # ========== 样式（紧凑风格）==========
     css = """
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -136,8 +134,6 @@ def generate_html(entries):
         .header h1 { font-size: 1.8rem; font-weight: 700; color: #0b3b5c; }
         .header p { font-size: 0.95rem; color: #4a5b6e; }
         .header .badge { display: inline-block; background: #1d7a8c; color: #fff; font-size: 0.75rem; padding: 0.1rem 0.8rem; border-radius: 20px; margin-top: 0.3rem; }
-
-        /* 搜索栏 */
         .search-bar {
             display: flex;
             flex-wrap: wrap;
@@ -183,8 +179,6 @@ def generate_html(entries):
             .search-bar { border-radius: 16px; padding: 0.8rem; flex-direction: column; }
             .search-bar input[type="text"], .search-bar select { width: 100%; }
         }
-
-        /* 关键词卡片网格 */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -287,7 +281,6 @@ def generate_html(entries):
     </style>
     """
 
-    # ========== 构建 HTML ==========
     html_lines = []
     html_lines.append('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">')
     html_lines.append(f'<title>{SITE_TITLE}</title>')
@@ -295,7 +288,6 @@ def generate_html(entries):
     html_lines.append('</head><body>')
     html_lines.append('<div class="container">')
 
-    # 横幅
     html_lines.append(f'''
     <div class="banner">
         <div class="banner-left">
@@ -306,7 +298,6 @@ def generate_html(entries):
     </div>
     ''')
 
-    # 搜索栏
     html_lines.append('''
     <div class="search-bar">
         <input type="text" id="searchInput" placeholder="🔍 搜索关键词或标题">
@@ -320,7 +311,6 @@ def generate_html(entries):
     </div>
     ''')
 
-    # 卡片网格
     html_lines.append('<div class="grid" id="newsGrid">')
     for kw in ordered_keywords:
         items = grouped_by_keyword[kw]
@@ -329,7 +319,7 @@ def generate_html(entries):
         html_lines.append(f'<div class="card" data-keyword="{kw}">')
         html_lines.append(f'<div class="category"><span class="icon">{icon}</span><h2>{display_name}</h2><span class="tag">{len(items)}条</span></div>')
         html_lines.append('<ul class="news-list">')
-        for item in items[:50]:  # 每个关键词最多显示50条
+        for item in items[:50]:
             title = html.escape(item['title'])
             link = item['link']
             source = html.escape(item.get('source', '未知来源'))
@@ -350,7 +340,6 @@ def generate_html(entries):
         html_lines.append('</div>')
     html_lines.append('</div>')
 
-    # 页脚
     html_lines.append(f'''
     <div class="footer">
         🤖 机器人每周一自动更新 · 按关键词自动分类 · 数据来源于 RSS 聚合<br>
@@ -360,7 +349,6 @@ def generate_html(entries):
 
     html_lines.append('</div>')
 
-    # 返回顶部 + 搜索脚本
     html_lines.append('''
     <button class="back-to-top" id="backToTop" aria-label="回到顶部">↑</button>
     <script>
