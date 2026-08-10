@@ -417,7 +417,7 @@ def generate_html(entries):
     print("网页生成成功！")
 
 if __name__ == "__main__":
-    print("奶奶稍等，机器人开始抓新闻了...")
+    print("稍等，机器人开始抓新闻了...")
     news = fetch_news()
     print(f"共抓取 {len(news)} 条新闻，正在排版...")
     generate_html(news)
