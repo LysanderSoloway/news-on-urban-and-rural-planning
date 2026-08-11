@@ -38,6 +38,26 @@ KEYWORD_ALIAS = {
 SITE_TITLE = "城乡规划 · 十大热点新闻聚合"
 # ===============================================
 
+# ===================== 静态新闻数据（从您的 HTML 中提取）=====================
+STATIC_DATA = {
+    "存量提质增效": [
+        {"title": "年内出台政策近百条 城市更新按下加速键", "url": "https://stcn.com/article/detail/4036338.html", "source": "证券时报", "date": "2026-07-23"},
+        {"title": "专家解读：加快适应房地产存量时代的到来", "url": "https://www.chinajsb.cn/html/202607/17/58447.html", "source": "中国建设新闻网", "date": "2026-07-17"}
+    ],
+    "城市更新十五五规划": [
+        {"title": "国务院关于印发《城市更新十五五规划》的通知", "url": "https://www.gov.cn/zhengce/content/202605/content_7070539.htm", "source": "中国政府网", "date": "2026-05-15"}
+    ],
+    "人本更新": [],
+    "城市体检": [],
+    "安全韧性": [],
+    "四好建设": [],
+    "城乡融合": [],
+    "新质生产力": [],
+    "临时使用": [],
+    "规划转型": [],
+    "智能建造": [],
+    "数智孪生": []
+}
 def extract_region(text):
     """判断地域：全国 / 广东省 / 广州市"""
     text = text.lower()
@@ -94,15 +114,24 @@ def fetch_news():
             continue
     return all_entries
 
-def generate_html(entries):
-    # 按时间排序（最新的在前）
-    entries.sort(key=lambda x: x['date'], reverse=True)
+def merge_data(static_data, scraped_entries):
+    """合并静态数据和新抓取的数据，按标题去重"""
+    merged = {kw: list(static_data.get(kw, [])) for kw in KEYWORDS}
+    seen_titles = {kw: {item['title'] for item in merged[kw]} for kw in merged}
+    for entry in scraped_entries:
+        for kw in entry['keywords']:
+            if kw in merged and entry['title'] not in seen_titles[kw]:
+                merged[kw].append({
+                    'title': entry['title'],
+                    'url': entry['url'],
+                    'source': entry['source'],
+                    'date': entry['date']
+                })
+                seen_titles[kw].add(entry['title'])
+    return merged
 
-    # 按关键词分组
-    grouped = defaultdict(list)
-    for item in entries:
-        for kw in item['keywords']:
-            grouped[kw].append(item)
+def generate_html(merged_data):
+    # 直接使用合并后的数据，不需要再分组
 
     # 保证所有12个关键词都显示（即使没有新闻）
     ordered_keywords = KEYWORDS  # 按原顺序
@@ -110,8 +139,8 @@ def generate_html(entries):
     # ========== 准备 JavaScript 数据（符合前端格式） ==========
     # 构建与用户静态数据相同结构的数据
     js_data = []
-    for kw in ordered_keywords:
-        items = grouped.get(kw, [])
+    for kw in KEYWORDS:
+        items = merged_data.get(kw, [])
         # 每条新闻转换格式
         items_js = []
         for it in items:
@@ -848,7 +877,10 @@ def generate_html(entries):
 
 if __name__ == "__main__":
     print("稍等，机器人开始抓新闻了...")
-    news = fetch_news()
-    print(f"共抓取 {len(news)} 条新闻，正在排版...")
-    generate_html(news)
+    scraped = fetch_news()
+    print(f"抓取到 {len(scraped)} 条新新闻")
+    merged = merge_data(STATIC_DATA, scraped)
+    total = sum(len(v) for v in merged.values())
+    print(f"合并后共有 {total} 条新闻，正在排版...")
+    generate_html(merged)
     print("全部搞定！")
