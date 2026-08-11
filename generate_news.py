@@ -1068,24 +1068,36 @@ def generate_html(merged_data):
         }}
         renderCards(newsData);
 
+                // 搜索与地域过滤
         const searchInput = document.getElementById('searchInput');
         const regionFilter = document.getElementById('regionFilter');
         const clearBtn = document.getElementById('clearBtn');
-        searchInput.addEventListener('input', function() {{
-            const keyword = this.value.trim().toLowerCase();
-            const filteredData = newsData.map(group => {{
-                let filteredItems = group.items.filter(item =>
-                    item.title.toLowerCase().includes(keyword)
-                );
-                return {{ ...group, items: filteredItems }};
-            }}).filter(group => group.items.length > 0);
+
+        function applyFilter() {
+            const keyword = searchInput.value.trim().toLowerCase();
+            const region = regionFilter.value;
+
+            const filteredData = newsData.map(group => {
+                let filteredItems = group.items.filter(item => {
+                    // 标题匹配
+                    const matchTitle = item.title.toLowerCase().includes(keyword);
+                    // 地域匹配：如果没有选地域，全部显示；否则只显示匹配的
+                    const matchRegion = region === '' || item.region === region;
+                    return matchTitle && matchRegion;
+                });
+                return { ...group, items: filteredItems };
+            }).filter(group => group.items.length > 0);
+
             renderCards(filteredData);
-        }});
-        clearBtn.addEventListener('click', function() {{
+        }
+
+        searchInput.addEventListener('input', applyFilter);
+        regionFilter.addEventListener('change', applyFilter);
+        clearBtn.addEventListener('click', function() {
             searchInput.value = '';
             regionFilter.value = '';
             renderCards(newsData);
-        }});
+        });
 
         const bannerIcon = document.getElementById('bannerIcon');
         const bannerKeyword = document.getElementById('bannerKeyword');
