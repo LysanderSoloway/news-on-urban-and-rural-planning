@@ -7,11 +7,15 @@ from collections import defaultdict
 
 # ===================== 配置区 =====================
 RSS_URLS = [
+    # ===== 原有通用源 =====
     "https://news.google.com/rss/search?q=城乡规划+国土空间&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
     "https://news.google.com/rss/search?q=城市更新+老旧小区&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
     "https://news.google.com/rss/search?q=乡村振兴+美丽乡村&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
     "https://news.google.com/rss/search?q=城市体检+安全韧性&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
-    "https://news.google.com/rss/search?q=智能建造+数智孪生&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
+    # ===== 新增：专门针对智能建造和数智孪生 =====
+    "https://news.google.com/rss/search?q=智能建造+BIM+建筑机器人&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
+    "https://news.google.com/rss/search?q=数智孪生+数字孪生+CIM&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
+    "https://news.google.com/rss/search?q=智慧工地+建筑信息化&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",
 ]
 
 KEYWORDS = [
