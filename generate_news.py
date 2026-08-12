@@ -59,8 +59,15 @@ def match_keywords(text):
                 matched.append(kw)
         elif kw in text:
             matched.append(kw)
+    
+    # ===== 新增：特殊匹配，让“数智孪生”也能匹配到“数字孪生”、“CIM”等 =====
+    # 只要标题里包含“数字孪生”或“数智孪生”或“CIM”，都算作“数智孪生”
+    if "数智孪生" in KEYWORDS:
+        if re.search(r'数字孪生|数智孪生|CIM|城市信息模型', text):
+            if "数智孪生" not in matched:
+                matched.append("数智孪生")
+    
     return matched
-
 def fetch_news():
     all_entries = []
     for url in RSS_URLS:
