@@ -1073,23 +1073,21 @@ def generate_html(merged_data):
         const regionFilter = document.getElementById('regionFilter');
         const clearBtn = document.getElementById('clearBtn');
 
-        function applyFilter() {
+                function applyFilter() {{
             const keyword = searchInput.value.trim().toLowerCase();
             const region = regionFilter.value;
 
-            const filteredData = newsData.map(group => {
-                let filteredItems = group.items.filter(item => {
-                    // 标题匹配
+            const filteredData = newsData.map(group => {{
+                let filteredItems = group.items.filter(item => {{
                     const matchTitle = item.title.toLowerCase().includes(keyword);
-                    // 地域匹配：如果没有选地域，全部显示；否则只显示匹配的
                     const matchRegion = region === '' || item.region === region;
                     return matchTitle && matchRegion;
-                });
-                return { ...group, items: filteredItems };
-            }).filter(group => group.items.length > 0);
+                }});
+                return {{ ...group, items: filteredItems }};
+            }}).filter(group => group.items.length > 0);
 
             renderCards(filteredData);
-        }
+        }}
 
         searchInput.addEventListener('input', applyFilter);
         regionFilter.addEventListener('change', applyFilter);
