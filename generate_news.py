@@ -1067,14 +1067,35 @@ def generate_html(merged_data):
     const regionFilter = document.getElementById('regionFilter');
     const clearBtn = document.getElementById('clearBtn');
 
-    function applyFilter() {
+        function applyFilter() {
         const keyword = searchInput.value.trim().toLowerCase();
         const region = regionFilter.value;
 
         const filteredData = newsData.map(group => {
             let filteredItems = group.items.filter(item => {
                 const matchTitle = item.title.toLowerCase().includes(keyword);
-                const matchRegion = region === '' || item.region === region;
+                // 如果 item 没有 region，从标题推断
+                let itemRegion = item.region || '';
+                // 如果还是没有，用简单规则从标题推断
+                if (!itemRegion) {
+                    const title = item.title;
+                    if (title.includes('广州') || title.includes('越秀') || title.includes('天河') || 
+                        title.includes('海珠') || title.includes('荔湾') || title.includes('白云') ||
+                        title.includes('黄埔') || title.includes('番禺') || title.includes('花都') ||
+                        title.includes('南沙') || title.includes('从化') || title.includes('增城')) {
+                        itemRegion = '广州市';
+                    } else if (title.includes('广东') || title.includes('深圳') || title.includes('东莞') ||
+                               title.includes('佛山') || title.includes('珠海') || title.includes('中山') ||
+                               title.includes('惠州') || title.includes('江门') || title.includes('肇庆') ||
+                               title.includes('汕头') || title.includes('湛江')) {
+                        itemRegion = '广东省';
+                    } else {
+                        itemRegion = '全国';
+                    }
+                    // 保存到 item 上，下次直接用
+                    item.region = itemRegion;
+                }
+                const matchRegion = region === '' || itemRegion === region;
                 return matchTitle && matchRegion;
             });
             return { ...group, items: filteredItems };
