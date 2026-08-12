@@ -802,6 +802,13 @@ def generate_html(merged_data):
             'items': items
         })
 
+    import json
+    js_data_json = json.dumps(js_data, ensure_ascii=False)
+
+    total_entries = sum(len(v) for v in merged_data.values())
+    now_str = datetime.datetime.now().strftime("%Y年%m月%d日")
+    update_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+
     css = """
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -977,14 +984,17 @@ def generate_html(merged_data):
     </style>
     """
 
-    html_lines = []
-    html_lines.append('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">')
-    html_lines.append(f'<title>{SITE_TITLE}</title>')
-    html_lines.append(css)
-    html_lines.append('</head><body>')
-    html_lines.append('<div class="container">')
-
-    html_lines.append('''
+    html_template = """
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城乡规划 · 十大热点新闻聚合</title>
+    %s
+</head>
+<body>
+<div class="container">
     <div class="banner" id="banner">
         <div class="banner-left">
             <span class="banner-icon" id="bannerIcon">🏙️</span>
@@ -996,18 +1006,11 @@ def generate_html(merged_data):
         </div>
         <div class="banner-indicators" id="indicators"></div>
     </div>
-    ''')
-
-    total_entries = sum(len(v) for v in merged_data.values())
-    html_lines.append(f'''
     <div class="header">
-        <h1>🏙️ {SITE_TITLE}</h1>
+        <h1>🏙️ 城乡规划 · 十大热点新闻聚合</h1>
         <p>基于 2026 年政策文件与行业动态，聚合十二大关键词下的最新新闻资讯</p>
-        <span class="badge">📅 {datetime.datetime.now().strftime("%Y年%m月%d日")} · 共 {total_entries} 条</span>
+        <span class="badge">📅 %s · 共 %d 条</span>
     </div>
-    ''')
-
-    html_lines.append('''
     <div class="search-bar">
         <input type="text" id="searchInput" placeholder="🔍 搜索关键词或标题">
         <select id="regionFilter">
@@ -1018,146 +1021,149 @@ def generate_html(merged_data):
         </select>
         <button class="clear-btn" id="clearBtn">清除筛选</button>
     </div>
-    ''')
-
-    html_lines.append('<div class="grid" id="newsGrid"></div>')
-
-    html_lines.append(f'''
+    <div class="grid" id="newsGrid"></div>
     <div class="footer">
         <p>🤖 机器人每周一自动更新 · 数据来源于 RSS 聚合 · 仅供学习参考</p>
-        <span style="font-size:0.8rem;">更新于 {datetime.datetime.now().strftime("%Y-%m-%d %H:%M")}</span>
+        <span style="font-size:0.8rem;">更新于 %s</span>
     </div>
-    ''')
+</div>
+<button class="back-to-top" id="backToTopBtn" aria-label="回到顶部">↑</button>
 
-    html_lines.append('</div>')
-    html_lines.append('<button class="back-to-top" id="backToTopBtn" aria-label="回到顶部">↑</button>')
+<script>
+    const newsData = %s;
 
-    import json
-    js_data_json = json.dumps(js_data, ensure_ascii=False)
+    const grid = document.getElementById('newsGrid');
 
-    html_lines.append(f'''
-    <script>
-        const newsData = {js_data_json};
-        const grid = document.getElementById('newsGrid');
-
-        function renderCards(data) {{
-            let html = '';
-            data.forEach((group) => {{
-                const itemsHtml = group.items.map(item => `
-                    <li>
-                        <a href="${{item.url}}" target="_blank">${{item.title}}</a>
-                        <div class="meta">
-                            <span class="source">${{item.source}}</span>
-                            <span class="date">${{item.date}}</span>
-                        </div>
-                    </li>
-                `).join('');
-                html += `
-                    <div class="card">
-                        <div class="category">
-                            <span class="icon">${{group.icon}}</span>
-                            <h2>${{group.keyword}}</h2>
-                            <span class="tag">${{group.tag || ''}}</span>
-                        </div>
-                        <ul class="news-list">${{itemsHtml}}</ul>
-                        <div class="card-footer">📰 共 ${{group.items.length}} 条新闻</div>
+    function renderCards(data) {
+        let html = '';
+        data.forEach((group) => {
+            const itemsHtml = group.items.map(item => `
+                <li>
+                    <a href="${item.url}" target="_blank">${item.title}</a>
+                    <div class="meta">
+                        <span class="source">${item.source}</span>
+                        <span class="date">${item.date}</span>
                     </div>
-                `;
-            }});
-            grid.innerHTML = html;
-        }}
-        renderCards(newsData);
-
-                // 搜索与地域过滤
-        const searchInput = document.getElementById('searchInput');
-        const regionFilter = document.getElementById('regionFilter');
-        const clearBtn = document.getElementById('clearBtn');
-
-                function applyFilter() {{
-            const keyword = searchInput.value.trim().toLowerCase();
-            const region = regionFilter.value;
-
-            const filteredData = newsData.map(group => {{
-                let filteredItems = group.items.filter(item => {{
-                    const matchTitle = item.title.toLowerCase().includes(keyword);
-                    const matchRegion = region === '' || item.region === region;
-                    return matchTitle && matchRegion;
-                }});
-                return {{ ...group, items: filteredItems }};
-            }}).filter(group => group.items.length > 0);
-
-            renderCards(filteredData);
-        }}
-
-        searchInput.addEventListener('input', applyFilter);
-        regionFilter.addEventListener('change', applyFilter);
-        clearBtn.addEventListener('click', function() {
-            searchInput.value = '';
-            regionFilter.value = '';
-            renderCards(newsData);
+                </li>
+            `).join('');
+            html += `
+                <div class="card">
+                    <div class="category">
+                        <span class="icon">${group.icon}</span>
+                        <h2>${group.keyword}</h2>
+                        <span class="tag">${group.tag || ''}</span>
+                    </div>
+                    <ul class="news-list">${itemsHtml}</ul>
+                    <div class="card-footer">📰 共 ${group.items.length} 条新闻</div>
+                </div>
+            `;
         });
+        grid.innerHTML = html;
+    }
+    renderCards(newsData);
 
-        const bannerIcon = document.getElementById('bannerIcon');
-        const bannerKeyword = document.getElementById('bannerKeyword');
-        const bannerTag = document.getElementById('bannerTag');
-        const indicatorsContainer = document.getElementById('indicators');
-        const keywords = newsData.map(g => ({{ name: g.keyword, icon: g.icon, tag: g.tag || '' }}));
-        let currentIndex = 0, intervalId = null;
-        function renderIndicators() {{
-            indicatorsContainer.innerHTML = '';
-            keywords.forEach((_, idx) => {{
-                const dot = document.createElement('span');
-                dot.className = 'dot' + (idx === currentIndex ? ' active' : '');
-                dot.dataset.index = idx;
-                dot.addEventListener('click', function() {{
-                    goTo(parseInt(this.dataset.index, 10));
-                }});
-                indicatorsContainer.appendChild(dot);
-            }});
-        }}
-        function updateBanner(index) {{
-            const item = keywords[index];
-            bannerIcon.textContent = item.icon;
-            bannerKeyword.textContent = item.name;
-            bannerTag.textContent = item.tag;
-            const dots = indicatorsContainer.querySelectorAll('.dot');
-            dots.forEach((dot, i) => {{
-                dot.classList.toggle('active', i === index);
-            }});
-        }}
-        function goTo(index) {{
-            if (index < 0) index = keywords.length - 1;
-            if (index >= keywords.length) index = 0;
-            currentIndex = index;
-            updateBanner(currentIndex);
-            resetInterval();
-        }}
-        function next() {{ goTo(currentIndex + 1); }}
-        function resetInterval() {{
-            if (intervalId) clearInterval(intervalId);
-            intervalId = setInterval(next, 4000);
-        }}
-        renderIndicators();
-        updateBanner(0);
+    // 搜索与地域过滤
+    const searchInput = document.getElementById('searchInput');
+    const regionFilter = document.getElementById('regionFilter');
+    const clearBtn = document.getElementById('clearBtn');
+
+    function applyFilter() {
+        const keyword = searchInput.value.trim().toLowerCase();
+        const region = regionFilter.value;
+
+        const filteredData = newsData.map(group => {
+            let filteredItems = group.items.filter(item => {
+                const matchTitle = item.title.toLowerCase().includes(keyword);
+                const matchRegion = region === '' || item.region === region;
+                return matchTitle && matchRegion;
+            });
+            return { ...group, items: filteredItems };
+        }).filter(group => group.items.length > 0);
+
+        renderCards(filteredData);
+    }
+
+    searchInput.addEventListener('input', applyFilter);
+    regionFilter.addEventListener('change', applyFilter);
+    clearBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        regionFilter.value = '';
+        renderCards(newsData);
+    });
+
+    // 轮播
+    const bannerIcon = document.getElementById('bannerIcon');
+    const bannerKeyword = document.getElementById('bannerKeyword');
+    const bannerTag = document.getElementById('bannerTag');
+    const indicatorsContainer = document.getElementById('indicators');
+    const keywords = newsData.map(g => ({ name: g.keyword, icon: g.icon, tag: g.tag || '' }));
+    let currentIndex = 0, intervalId = null;
+    function renderIndicators() {
+        indicatorsContainer.innerHTML = '';
+        keywords.forEach((_, idx) => {
+            const dot = document.createElement('span');
+            dot.className = 'dot' + (idx === currentIndex ? ' active' : '');
+            dot.dataset.index = idx;
+            dot.addEventListener('click', function() {
+                goTo(parseInt(this.dataset.index, 10));
+            });
+            indicatorsContainer.appendChild(dot);
+        });
+    }
+    function updateBanner(index) {
+        const item = keywords[index];
+        bannerIcon.textContent = item.icon;
+        bannerKeyword.textContent = item.name;
+        bannerTag.textContent = item.tag;
+        const dots = indicatorsContainer.querySelectorAll('.dot');
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+    }
+    function goTo(index) {
+        if (index < 0) index = keywords.length - 1;
+        if (index >= keywords.length) index = 0;
+        currentIndex = index;
+        updateBanner(currentIndex);
         resetInterval();
-        const banner = document.getElementById('banner');
-        banner.addEventListener('mouseenter', function() {{ if (intervalId) {{ clearInterval(intervalId); intervalId = null; }} }});
-        banner.addEventListener('mouseleave', function() {{ if (!intervalId) intervalId = setInterval(next, 4000); }});
+    }
+    function next() { goTo(currentIndex + 1); }
+    function resetInterval() {
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(next, 4000);
+    }
+    renderIndicators();
+    updateBanner(0);
+    resetInterval();
+    const banner = document.getElementById('banner');
+    banner.addEventListener('mouseenter', function() { if (intervalId) { clearInterval(intervalId); intervalId = null; } });
+    banner.addEventListener('mouseleave', function() { if (!intervalId) intervalId = setInterval(next, 4000); });
 
-        const backBtn = document.getElementById('backToTopBtn');
-        window.addEventListener('scroll', function() {{
-            if (window.scrollY > 300) backBtn.classList.add('visible');
-            else backBtn.classList.remove('visible');
-        }});
-        backBtn.addEventListener('click', function() {{
-            window.scrollTo({{ top: 0, behavior: 'smooth' }});
-        }});
-    </script>
-    </body></html>
-    ''')
+    // 回到顶部
+    const backBtn = document.getElementById('backToTopBtn');
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) backBtn.classList.add('visible');
+        else backBtn.classList.remove('visible');
+    });
+    backBtn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+</script>
+</body>
+</html>
+    """
+
+    # 用 % 格式化填充模板（注意顺序要匹配）
+    html = html_template % (
+        css,                          # %s 样式
+        now_str,                      # %s 日期
+        total_entries,                # %d 总条数
+        update_str,                   # %s 更新时间
+        js_data_json                  # %s 新闻数据
+    )
 
     with open('index.html', 'w', encoding='utf-8') as f:
-        f.write('\n'.join(html_lines))
+        f.write(html)
     print("网页生成成功！")
 
 if __name__ == "__main__":
