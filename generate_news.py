@@ -906,6 +906,20 @@ def generate_html(merged_data):
             font-weight: 500;
         }
         .search-bar .clear-btn:hover { background: #d0ddee; }
+        .search-bar .search-btn {
+    background: #1d7a8c;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 40px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: #fff;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+.search-bar .search-btn:hover {
+    background: #0b5a6a;
+}
         @media (max-width: 600px) {
             .search-bar { border-radius: 20px; padding: 1rem; flex-direction: column; }
             .search-bar input[type="text"], .search-bar select { width: 100%; }
@@ -1022,8 +1036,9 @@ def generate_html(merged_data):
         <p>基于 2026 年政策文件与行业动态，聚合十二大关键词下的最新新闻资讯</p>
         <span class="badge">📅 %s · 共 %d 条</span>
     </div>
-    <div class="search-bar">
+        <div class="search-bar">
         <input type="text" id="searchInput" placeholder="🔍 搜索关键词或标题">
+        <button class="search-btn" id="searchBtn">🔍 搜索</button>
         <select id="regionFilter">
             <option value="">所有地域</option>
             <option value="全国">全国</option>
@@ -1117,6 +1132,7 @@ def generate_html(merged_data):
 
     searchInput.addEventListener('input', applyFilter);
     regionFilter.addEventListener('change', applyFilter);
+    document.getElementById('searchBtn').addEventListener('click', applyFilter);
     clearBtn.addEventListener('click', function() {
         searchInput.value = '';
         regionFilter.value = '';
