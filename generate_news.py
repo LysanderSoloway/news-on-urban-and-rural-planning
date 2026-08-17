@@ -39,7 +39,7 @@ KEYWORD_ALIAS = {
     "数智孪生": "数智孪生"
 }
 
-SITE_TITLE = "城乡规划 · 十大热点新闻聚合"
+SITE_TITLE = "城乡规划热点新闻聚合"
 # ===============================================
 
 def extract_region(text):
@@ -1028,7 +1028,7 @@ def generate_html(merged_data):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>城乡规划 · 十大热点新闻聚合</title>
+    <title>城乡规划热点新闻聚合</title>
     %s
 </head>
 <body>
@@ -1045,7 +1045,7 @@ def generate_html(merged_data):
         <div class="banner-indicators" id="indicators"></div>
     </div>
     <div class="header">
-        <h1>🏙️ 城乡规划 · 十大热点新闻聚合</h1>
+        <h1>🏙️ 城乡规划热点新闻聚合</h1>
         <p>基于 2026 年政策文件与行业动态，聚合十二大关键词下的最新新闻资讯</p>
         <span class="badge">📅 %s · 共 %d 条</span>
     </div>
