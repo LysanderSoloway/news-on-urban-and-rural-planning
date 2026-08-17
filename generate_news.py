@@ -68,6 +68,8 @@ def match_keywords(text):
                 matched.append("数智孪生")
     
     return matched
+import time  # 确保顶部有这一行
+
 def fetch_news():
     all_entries = []
     for url in RSS_URLS:
@@ -77,15 +79,26 @@ def fetch_news():
                 title = entry.get('title', '')
                 summary = entry.get('summary', entry.get('description', ''))
                 full_text = title + " " + summary
-                pub_time = entry.get('published', entry.get('updated', ''))
-                if not pub_time:
-                    continue
+
+                # ---- 修改日期解析部分 ----
+                pub_time_struct = entry.get('published_parsed', entry.get('updated_parsed'))
+                if not pub_time_struct:
+                    pub_time_str = entry.get('published', entry.get('updated', ''))
+                    if pub_time_str:
+                        try:
+                            pub_time_struct = feedparser._parse_date(pub_time_str)
+                        except:
+                            pub_time_struct = None
+                    if not pub_time_struct:
+                        continue
+                date_str = time.strftime("%Y-%m-%d", pub_time_struct)
+                # -----------------------------
+
                 region = extract_region(full_text)
                 keywords = match_keywords(full_text)
                 if not keywords:
                     continue
                 source = entry.get('source', {}).get('title', '未知来源')
-                date_str = pub_time[:10] if len(pub_time) >= 10 else pub_time
                 all_entries.append({
                     'title': title,
                     'url': entry.get('link', '#'),
