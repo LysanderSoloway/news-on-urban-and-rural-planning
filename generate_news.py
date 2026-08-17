@@ -1060,32 +1060,39 @@ def generate_html(merged_data):
 
     const grid = document.getElementById('newsGrid');
 
-    function renderCards(data) {
-        let html = '';
-        data.forEach((group) => {
-            const itemsHtml = group.items.map(item => `
-                <li>
-                    <a href="${item.url}" target="_blank">${item.title}</a>
-                    <div class="meta">
-                        <span class="source">${item.source}</span>
-                        <span class="date">${item.date}</span>
-                    </div>
-                </li>
-            `).join('');
-            html += `
-                <div class="card">
-                    <div class="category">
-                        <span class="icon">${group.icon}</span>
-                        <h2>${group.keyword}</h2>
-                        <span class="tag">${group.tag || ''}</span>
-                    </div>
-                    <ul class="news-list">${itemsHtml}</ul>
-                    <div class="card-footer">📰 共 ${group.items.length} 条新闻</div>
-                </div>
-            `;
+function renderCards(data) {
+    let html = '';
+    data.forEach((group) => {
+        // ---- 新增：按日期从新到旧排序 ----
+        const sortedItems = [...group.items].sort((a, b) => {
+            return new Date(b.date) - new Date(a.date);
         });
-        grid.innerHTML = html;
-    }
+        // ----------------------------------
+
+        const itemsHtml = sortedItems.map(item => `
+            <li>
+                <a href="${item.url}" target="_blank">${item.title}</a>
+                <div class="meta">
+                    <span class="source">${item.source}</span>
+                    <span class="date">${item.date}</span>
+                </div>
+            </li>
+        `).join('');
+
+        html += `
+            <div class="card">
+                <div class="category">
+                    <span class="icon">${group.icon}</span>
+                    <h2>${group.keyword}</h2>
+                    <span class="tag">${group.tag || ''}</span>
+                </div>
+                <ul class="news-list">${itemsHtml}</ul>
+                <div class="card-footer">📰 共 ${sortedItems.length} 条新闻</div>
+            </div>
+        `;
+    });
+    grid.innerHTML = html;
+}
     renderCards(newsData);
 
     // 搜索与地域过滤
