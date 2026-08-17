@@ -1073,6 +1073,41 @@ def generate_html(merged_data):
 
     const grid = document.getElementById('newsGrid');
 
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    // 尝试解析各种可能的日期格式
+    let date = new Date(dateStr);
+    // 如果解析失败，尝试手动解析 'Mon, 15 Dec 2026' 等格式
+    if (isNaN(date.getTime())) {
+        // 尝试用正则提取年月日
+        const match = dateStr.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+        if (match) {
+            const year = parseInt(match[1]);
+            const month = parseInt(match[2]);
+            const day = parseInt(match[3]);
+            if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                return year + '年' + month + '月' + day + '日';
+            }
+        }
+        // 如果还是不行，尝试从字符串中提取数字
+        const nums = dateStr.match(/\d+/g);
+        if (nums && nums.length >= 3) {
+            let y = parseInt(nums[0]), m = parseInt(nums[1]), d = parseInt(nums[2]);
+            // 如果年份是两位，补全为四位
+            if (y < 100) y += 2000;
+            if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                return y + '年' + m + '月' + d + '日';
+            }
+        }
+        // 实在不行，返回原字符串
+        return dateStr;
+    }
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return year + '年' + month + '月' + day + '日';
+}
+
 function renderCards(data) {
     let html = '';
     data.forEach((group) => {
@@ -1087,7 +1122,7 @@ function renderCards(data) {
                 <a href="${item.url}" target="_blank">${item.title}</a>
                 <div class="meta">
                     <span class="source">${item.source}</span>
-                    <span class="date">${item.date}</span>
+                    <span class="date">${formatDate(item.date)}</span>
                 </div>
             </li>
         `).join('');
